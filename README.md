@@ -6,5 +6,5 @@ Link the module into to the project you want to performance test, the run mocha
 the following way:
 
 ```js
-mocha --ui chewbacca/mocha-benchmark-ui -R spec test/benchmark.spec.js
+mocha --ui chewbacca/mocha-benchmark-ui --reporter chewbacca/mocha-benchmark-reporter test/benchmark.spec.js
 ```
