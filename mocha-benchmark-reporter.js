@@ -63,6 +63,11 @@ exports = module.exports = function BenchmarkReporter(runner) {
  */
 
 function clean(test) {
+    if (test.metadata && typeof test.metadata.iterations === 'number' && typeof test.duration === 'number') {
+        test.metadata.averageDuration = test.duration / test.metadata.iterations;
+        test.metadata.operationsPrSecond = test.metadata.iterations / (test.duration / 1000);
+    }
+
     return {
         title: test.title,
         fullTitle: test.fullTitle(),
