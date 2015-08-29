@@ -1,8 +1,7 @@
 {
-  "name": "mocha-benchmark-ui",
+  "name": "chewbacca",
   "version": "1.0.0",
-  "description": "A benchmark UI for Mocha that will run the body of each test many times.",
-  "main": "index.js",
+  "description": "A benchmark tool for Mocha test that will run the body of each test many times.",
   "scripts": {
     "test": "mocha"
   },
