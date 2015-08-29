@@ -7,23 +7,6 @@ var Suite = require('mocha/lib/suite');
 var Test  = require('mocha/lib/test');
 var Promise = require('rsvp').Promise;
 
-/**
- * BDD-style interface that will loop each test for benchmarking:
- *
- *      describe('Array', function() {
- *        describe('#indexOf()', function() {
- *          it('should return -1 when not present', function() {
- *            // ...
- *          });
- *
- *          it('should return the index when present', function() {
- *            // ...
- *          });
- *        });
- *      });
- *
- * @param {Suite} suite Root suite.
- */
 module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
     var suites = [suite];
 
@@ -39,11 +22,6 @@ module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
             throw new Error('afterEach is not supported for benchmarks');
         };
         context.run = mocha.options.delay && common.runWithSuite(suite);
-        /**
-         * Describe a "suite" with the given `title`
-         * and callback `fn` containing nested suites
-         * and/or tests.
-         */
 
         context.describe = context.context = function(title, fn) {
             var suite = Suite.create(suites[0], title);
@@ -54,10 +32,6 @@ module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
             return suite;
         };
 
-        /**
-         * Pending describe.
-         */
-
         context.xdescribe = context.xcontext = context.describe.skip = function(title, fn) {
             var suite = Suite.create(suites[0], title);
             suite.pending = true;
@@ -66,21 +40,11 @@ module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
             suites.shift();
         };
 
-        /**
-         * Exclusive suite.
-         */
-
         context.describe.only = function(title, fn) {
             var suite = context.describe(title, fn);
             mocha.grep(suite.fullTitle());
             return suite;
         };
-
-        /**
-         * Describe a specification or test-case
-         * with the given `title` and callback `fn`
-         * acting as a thunk.
-         */
 
         context.it = context.specify = function(title, fn) {
             var suite = suites[0];
@@ -129,20 +93,12 @@ module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
             return test;
         };
 
-        /**
-         * Exclusive test-case.
-         */
-
         context.it.only = function(title, fn) {
             var test = context.it(title, fn);
             var reString = '^' + escapeRe(test.fullTitle()) + '$';
             mocha.grep(new RegExp(reString));
             return test;
         };
-
-        /**
-         * Pending test case.
-         */
 
         context.xit = context.xspecify = context.it.skip = function(title) {
             context.it(title);

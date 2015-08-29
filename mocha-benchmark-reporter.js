@@ -1,17 +1,6 @@
-/**
- * Module dependencies.
- */
-
 var Base = require('mocha/lib/reporters/base');
 var cursor = Base.cursor;
 var color = Base.color;
-
-/**
- * Initialize a new `JSON` reporter.
- *
- * @param {Runner} runner
- * @api public
- */
 
 exports = module.exports = function BenchmarkReporter(runner) {
     var self = this;
@@ -41,10 +30,10 @@ exports = module.exports = function BenchmarkReporter(runner) {
     runner.on('end', function(){
         var obj = {
             stats: self.stats,
-            tests: tests.map(clean),
-            pending: pending.map(clean),
-            failures: failures.map(clean),
-            passes: passes.map(clean)
+            tests: tests.map(toJsonOutput),
+            pending: pending.map(toJsonOutput),
+            failures: failures.map(toJsonOutput),
+            passes: passes.map(toJsonOutput)
         };
 
         runner.testResults = obj;
@@ -53,16 +42,7 @@ exports = module.exports = function BenchmarkReporter(runner) {
     });
 }
 
-/**
- * Return a plain-object representation of `test`
- * free of cyclic properties etc.
- *
- * @param {Object} test
- * @return {Object}
- * @api private
- */
-
-function clean(test) {
+function toJsonOutput(test) {
     if (test.metadata && typeof test.metadata.iterations === 'number' && typeof test.duration === 'number') {
         test.metadata.averageDuration = test.duration / test.metadata.iterations;
         test.metadata.operationsPrSecond = test.metadata.iterations / (test.duration / 1000);
@@ -76,12 +56,6 @@ function clean(test) {
         metadata: test.metadata
     }
 }
-
-/**
- * Transform `error` into a JSON object.
- * @param {Error} err
- * @return {Object}
- */
 
 function errorJSON(err) {
     var res = {};
