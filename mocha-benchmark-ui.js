@@ -121,6 +121,9 @@ module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
                 }
                 return result;
             });
+            test.metadata = {
+                iterations: iterations
+            };
             test.file = file;
             suite.addTest(test);
             return test;
