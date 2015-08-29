@@ -5,7 +5,7 @@
 var Mocha = require('mocha');
 var Suite = require('mocha/lib/suite');
 var Test  = require('mocha/lib/test');
-var Promise = require('es6-promise').Promise;
+var Promise = require('rsvp').Promise;
 
 /**
  * BDD-style interface that will loop each test for benchmarking:
@@ -89,20 +89,14 @@ module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
             }
 
             var iterations = 10000;
-            var benchmarkFunction;
-            if (fn.length === 0) {
-                benchmarkFunction = function () {
-                    var promises = [];
-                    for (var i = 0; i < iterations; i += 1) {
-                        promises.push(fn());
-                    }
-                    return Promise.all(promises);
-                }
-            } else {
-                benchmarkFunction = function () {
-                    var promises = [];
-                    for (var i = 0; i < iterations; i += 1) {
-                        promises.push(new Promise(function (resolve, reject) {
+            var isAsync = fn && fn.length > 0;
+
+            var test = new Test(title, function () {
+                var result = null;
+                var promise;
+                for (var i = 0; i < iterations; i += 1) {
+                    if (isAsync) {
+                        promise = new Promise(function (resolve, reject) {
                             fn(function (err) {
                                 if (err) {
                                     reject(err);
@@ -110,13 +104,23 @@ module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
                                     resolve();
                                 }
                             });
-                        }));
+                        });
+                    } else {
+                        promise = fn();
                     }
-                    return Promise.all(promises)
-                };
-            }
 
-            var test = new Test(title, benchmarkFunction);
+                    if (promise && typeof promise.then === 'function') {
+                        if (result) {
+                            result = result.then(function () {
+                                return promise;
+                            });
+                        } else {
+                            result = promise;
+                        }
+                    }
+                }
+                return result;
+            });
             test.file = file;
             suite.addTest(test);
             return test;
