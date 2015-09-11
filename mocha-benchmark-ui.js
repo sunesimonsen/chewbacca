@@ -1,11 +1,8 @@
-/**
- * Module dependencies.
- */
-
 var Mocha = require('mocha');
 var Suite = require('mocha/lib/suite');
 var Test  = require('mocha/lib/test');
 var Promise = require('rsvp').Promise;
+var escapeRe = require('escape-string-regexp');
 
 module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
     var suites = [suite];
