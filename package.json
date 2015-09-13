@@ -7,9 +7,15 @@
   },
   "author": "Sune Simonsen",
   "license": "MIT",
+  "bin": {
+    "chewbacca": "./bin/chewbacca.js"
+  },
   "dependencies": {
-    "escape-string-regexp": "^1.0.3",
-    "rsvp": "^3.1.0"
+    "async": "1.4.2",
+    "escape-string-regexp": "1.0.3",
+    "minimist": "1.2.0",
+    "passerror": "1.1.0",
+    "rsvp": "3.1.0"
   },
   "peerDependencies": {
     "mocha": "^2.2.5"
