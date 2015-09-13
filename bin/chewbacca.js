@@ -12,9 +12,9 @@ function usage() {
     console.log('Usage:');
     console.log('');
     console.log('Compare a ref againt the working dir:');
-    console.log('chewbacca <git ref>');
+    console.log('chewbacca <git ref before>');
     console.log('Compare two ref againt each other:');
-    console.log('chewbacca <git ref> <git ref>');
+    console.log('chewbacca <git ref before> <git ref after>');
     console.log('All arguments after -- will be forwarded to mocha');
     console.log('');
     process.exit(0);
