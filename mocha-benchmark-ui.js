@@ -5,6 +5,22 @@ var Promise = require('rsvp').Promise;
 var escapeRe = require('escape-string-regexp');
 var microtime = require('microtime');
 
+function filterOutliers(data) {
+    // The smallest numbers are the most stable because of garbage collection
+    var sorted = data.slice().sort(function(a,b){return a - b; });
+    sorted = sorted.slice(0, Math.round(sorted.length / 4));
+    return sorted;
+}
+
+function averageWithoutOutliers(data) {
+    var values = filterOutliers(data);
+    var sum = values.reduce(function (result, duration) {
+        return result + duration;
+    }, 0);
+    return sum / values.length;
+}
+
+
 module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
     var suites = [suite];
 
@@ -50,15 +66,19 @@ module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
                 fn = null;
             }
 
-            var iterations = 10000;
+            var iterationCount = 10000;
             var isAsync = fn && fn.length > 0;
 
+            var iterations = new Array(iterationCount);
+            for (var i = 0; i < iterationCount; i += 1) {
+                iterations[i] = 0;
+            }
+            var indexes = Object.keys(iterations);
             var test = new Test(title, function () {
-                var that = this;
-                var start = microtime.now();
                 var result = null;
                 var promise;
-                for (var i = 0; i < iterations; i += 1) {
+                indexes.forEach(function (i) {
+                    var start = microtime.now();
                     if (isAsync) {
                         promise = new Promise(function (resolve, reject) {
                             fn(function (err) {
@@ -76,28 +96,31 @@ module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
                     if (promise && typeof promise.then === 'function') {
                         if (result) {
                             result = result.then(function () {
+                                iterations[i] = microtime.now() - start;
                                 return promise;
                             });
                         } else {
-                            result = promise;
+                            result = promise.then(function () {
+                                iterations[i] = microtime.now() - start;
+                            });
                         }
+                    } else {
+                        iterations[i] = microtime.now() - start;
                     }
-                }
+                });
 
                 if (result) {
                     result.then(function () {
-                        var end = microtime.now();
-                        test.metadata.duration = end - start;
+                        test.metadata.duration = averageWithoutOutliers(iterations) * iterationCount / 1000;
                     });
                 } else {
-                    var end = microtime.now();
-                    test.metadata.duration = end - start;
+                    test.metadata.duration = averageWithoutOutliers(iterations) * iterationCount / 1000;
                 }
 
                 return result;
             });
             test.metadata = {
-                iterations: iterations
+                iterations: iterationCount
             };
             test.file = file;
             suite.addTest(test);
