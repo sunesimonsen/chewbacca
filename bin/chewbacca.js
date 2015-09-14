@@ -53,21 +53,22 @@ exec('git diff-index --quiet HEAD', function (err, stdout, stderr) {
             throw err;
         }
     }
-    exec('git rev-parse --abbrev-ref HEAD', function (err, stdout, stderr) {
+
+    exec('git rev-parse HEAD', function (err, stdout, stderr) {
         if (err) {
             throw err;
         }
-        var originalRef = stdout.toString('utf-8').replace(/\n/, '');
+        var originalSha = stdout.toString('utf-8').replace(/\n/, '');
         async.eachLimit(refs, 1, function (ref, cb) {
             if (ref === 'working dir') {
                 proceedToRunBenchmark();
             } else {
                 if (dirtyWorkingTree) {
                     exec('git stash', passError(cb, function () {
-                        exec('git checkout ' + ref.replace(/^HEAD/, originalRef), true, passError(cb, proceedToRunBenchmark));
+                        exec('git checkout ' + ref.replace(/^HEAD/, originalSha), true, passError(cb, proceedToRunBenchmark));
                     }));
                 } else {
-                    exec('git checkout ' + ref.replace(/^HEAD/, originalRef), true, passError(cb, proceedToRunBenchmark));
+                    exec('git checkout ' + ref.replace(/^HEAD/, originalSha), true, passError(cb, proceedToRunBenchmark));
                 }
             }
             function proceedToRunBenchmark() {
@@ -76,11 +77,11 @@ exec('git diff-index --quiet HEAD', function (err, stdout, stderr) {
                      '--ui chewbacca/mocha-benchmark-ui ' +
                      '--reporter chewbacca/mocha-benchmark-reporter ' +
                      mochaArgs, passError(cb, function (stdout, stderr) {
-                    var result = JSON.parse(stdout.toString('utf-8'));
-                    result.ref = ref;
-                    results.push(result);
-                    cb();
-                }));
+                         var result = JSON.parse(stdout.toString('utf-8'));
+                         result.ref = ref;
+                         results.push(result);
+                         cb();
+                     }));
             }
         }, function (err) {
             if (err) {
@@ -116,7 +117,7 @@ exec('git diff-index --quiet HEAD', function (err, stdout, stderr) {
                         results[1].ref,
                         ((avg <= 0) ? results[0].ref : results[1].ref),
                         'on average');
-            exec('git checkout ' + originalRef, true, function (err) {
+            exec('git checkout ' + originalSha, true, function (err) {
                 function onFinish() {
                     if (typeof argv.threshold === 'number' && argv.threshold <= -avg * 100) {
                         console.log('Performance regression higher than threshold');
