@@ -115,7 +115,6 @@ exec('git diff-index --quiet HEAD', function (err, stdout, stderr) {
                         avg < 0 ? 'slower' : 'faster',
                         'than',
                         results[1].ref,
-                        ((avg <= 0) ? results[0].ref : results[1].ref),
                         'on average');
             exec('git checkout ' + originalSha, true, function (err) {
                 function onFinish() {
