@@ -35,10 +35,10 @@ function exec(commandLine, quiet, cb) {
         cb = quiet;
         quiet = false;
     }
-    console.warn(commandLine);
+    console.log(commandLine);
     childProcess.exec(commandLine, function (err, stdout, stderr) {
         if (stderr.length > 0 && !quiet) {
-            console.warn(stderr.toString('utf-8'));
+            console.log(stderr.toString('utf-8'));
         }
         cb(err, stdout, stderr);
     });
@@ -117,6 +117,12 @@ exec('git diff-index --quiet HEAD', function (err, stdout, stderr) {
                         ((avg <= 0) ? results[0].ref : results[1].ref),
                         'on average');
             exec('git checkout ' + originalRef, true, function (err) {
+                function onFinish() {
+                    if (typeof argv.threshold === 'number' && argv.threshold <= -avg * 100) {
+                        console.log('Performance regression higher than threshold');
+                        process.exit(1);
+                    }
+                }
                 if (err) {
                     throw err;
                 }
@@ -125,7 +131,10 @@ exec('git diff-index --quiet HEAD', function (err, stdout, stderr) {
                         if (err) {
                             throw err;
                         }
+                        onFinish();
                     });
+                } else {
+                    onFinish();
                 }
             });
         });
