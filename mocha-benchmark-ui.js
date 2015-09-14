@@ -66,7 +66,7 @@ module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
                 fn = null;
             }
 
-            var iterationCount = 10000;
+            var iterationCount = 5000;
             var isAsync = fn && fn.length > 0;
 
             var iterations = new Array(iterationCount);
