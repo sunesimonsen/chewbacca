@@ -3,6 +3,7 @@ var Suite = require('mocha/lib/suite');
 var Test  = require('mocha/lib/test');
 var Promise = require('rsvp').Promise;
 var escapeRe = require('escape-string-regexp');
+var microtime = require('microtime');
 
 module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
     var suites = [suite];
@@ -14,7 +15,7 @@ module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
         context.after = common.after;
         context.beforeEach = function () {
             throw new Error('beforeEach is not supported for benchmarks');
-        }
+        };
         context.afterEach = function () {
             throw new Error('afterEach is not supported for benchmarks');
         };
@@ -53,6 +54,8 @@ module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
             var isAsync = fn && fn.length > 0;
 
             var test = new Test(title, function () {
+                var that = this;
+                var start = microtime.now();
                 var result = null;
                 var promise;
                 for (var i = 0; i < iterations; i += 1) {
@@ -80,6 +83,17 @@ module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
                         }
                     }
                 }
+
+                if (result) {
+                    result.then(function () {
+                        var end = microtime.now();
+                        test.metadata.duration = end - start;
+                    });
+                } else {
+                    var end = microtime.now();
+                    test.metadata.duration = end - start;
+                }
+
                 return result;
             });
             test.metadata = {

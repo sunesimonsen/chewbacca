@@ -44,8 +44,9 @@ exports = module.exports = function BenchmarkReporter(runner) {
 
 function toJsonOutput(test) {
     if (test.metadata && typeof test.metadata.iterations === 'number' && typeof test.duration === 'number') {
-        test.metadata.averageDuration = test.duration / test.metadata.iterations;
-        test.metadata.operationsPrSecond = test.metadata.iterations / (test.duration / 1000);
+        var duration = test.metadata.duration / 1000;
+        test.metadata.averageDuration = duration  / test.metadata.iterations;
+        test.metadata.operationsPrSecond = test.metadata.iterations / (duration / 1000);
     }
 
     return {
@@ -54,7 +55,7 @@ function toJsonOutput(test) {
         duration: test.duration,
         err: errorJSON(test.err || {}),
         metadata: test.metadata
-    }
+    };
 }
 
 function errorJSON(err) {
