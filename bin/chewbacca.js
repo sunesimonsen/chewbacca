@@ -102,12 +102,20 @@ exec('git diff-index --quiet HEAD', function (err, stdout, stderr) {
                                 Math.round(result.metadata.operationsPrSecond),
                                 '/',
                                 Math.round(otherResult.metadata.operationsPrSecond),
-                                (100 * ratio).toFixed(2) + '%');
+                                (100 * Math.abs(ratio)).toFixed(2) + '%',
+                                ratio < 0 ? 'slower' : 'faster'
+                               );
                 }
             });
             var avg = sumRatios / numValidResults;
-            console.log('avg', (100 * avg).toFixed(2) + '%');
-            console.log(((avg > 1) ? results[0].ref : results[1].ref) + ' is the fastest');
+            console.log(results[0].ref,
+                        'is',
+                        (100 * Math.abs(avg)).toFixed(2) + '%',
+                        avg < 0 ? 'slower' : 'faster',
+                        'than',
+                        results[1].ref,
+                        ((avg <= 0) ? results[0].ref : results[1].ref),
+                        'on average');
             exec('git checkout ' + originalRef, true, function (err) {
                 if (err) {
                     throw err;
