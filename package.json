@@ -1,6 +1,6 @@
 {
   "name": "chewbacca",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A benchmark tool for Mocha test that will run the body of each test many times.",
   "scripts": {
     "test": "mocha"
