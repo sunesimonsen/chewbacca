@@ -3,7 +3,6 @@ var Suite = require('mocha/lib/suite');
 var Test  = require('mocha/lib/test');
 var Promise = require('rsvp').Promise;
 var escapeRe = require('escape-string-regexp');
-var microtime = require('microtime');
 
 function filterOutliers(data) {
     // The smallest numbers are the most stable because of garbage collection
@@ -20,6 +19,19 @@ function averageWithoutOutliers(data) {
     return sum / values.length;
 }
 
+function nanoSeconds(hrtime) {
+    return hrtime[0] * 1e9 + hrtime[1];
+}
+
+var iterationCount = 5000;
+
+function updateMetadata(test, iterations) {
+    var averageOperationTimeNS = averageWithoutOutliers(iterations);
+    test.metadata.iterations = iterationCount;
+    test.metadata.duration = averageOperationTimeNS * iterationCount / 1000000;
+    test.metadata.averageDurationInNanoSeconds = averageOperationTimeNS;
+    test.metadata.operationsPrSecond = averageOperationTimeNS * 1e9;
+}
 
 module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
     var suites = [suite];
@@ -66,7 +78,6 @@ module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
                 fn = null;
             }
 
-            var iterationCount = 5000;
             var isAsync = fn && fn.length > 0;
 
             var iterations = new Array(iterationCount);
@@ -78,7 +89,7 @@ module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
                 var result = null;
                 var promise;
                 indexes.forEach(function (i) {
-                    var start = microtime.now();
+                    var start = process.hrtime();
                     if (isAsync) {
                         promise = new Promise(function (resolve, reject) {
                             fn(function (err) {
@@ -96,32 +107,30 @@ module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
                     if (promise && typeof promise.then === 'function') {
                         if (result) {
                             result = result.then(function () {
-                                iterations[i] = microtime.now() - start;
+                                iterations[i] = nanoSeconds(process.hrtime(start));
                                 return promise;
                             });
                         } else {
                             result = promise.then(function () {
-                                iterations[i] = microtime.now() - start;
+                                iterations[i] = nanoSeconds(process.hrtime(start));
                             });
                         }
                     } else {
-                        iterations[i] = microtime.now() - start;
+                        iterations[i] = nanoSeconds(process.hrtime(start));
                     }
                 });
 
                 if (result) {
                     result.then(function () {
-                        test.metadata.duration = averageWithoutOutliers(iterations) * iterationCount / 1000;
+                        updateMetadata(test, iterations);
                     });
                 } else {
-                    test.metadata.duration = averageWithoutOutliers(iterations) * iterationCount / 1000;
+                    updateMetadata(test, iterations);
                 }
 
                 return result;
             });
-            test.metadata = {
-                iterations: iterationCount
-            };
+            test.metadata = {};
             test.file = file;
             suite.addTest(test);
             return test;
