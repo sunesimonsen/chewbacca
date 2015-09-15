@@ -105,9 +105,10 @@ exec('git diff-index --quiet HEAD', function (err, stdout, stderr) {
                       numValidResults += 1;
                       sumRatios += ratio;
                       console.log(result.fullTitle,
-                                  Math.round(result.metadata.operationsPrSecond),
-                                  '/',
                                   Math.round(otherResult.metadata.operationsPrSecond),
+                                  'vs.',
+                                  Math.round(result.metadata.operationsPrSecond),
+                                  'ops',
                                   (100 * Math.abs(ratio)).toFixed(2) + '%',
                                   ratio < 0 ? 'slower' : 'faster'
                                  );
