@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "async": "1.4.2",
+    "bluebird": "2.10.0",
     "escape-string-regexp": "1.0.3",
     "minimist": "1.2.0",
     "passerror": "1.1.0",
