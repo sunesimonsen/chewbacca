@@ -64,6 +64,12 @@ function benchmarkRef(ref) {
                     '--ui chewbacca/mocha-benchmark-ui ' +
                     '--reporter chewbacca/mocha-benchmark-reporter ' +
                     mochaArgs);
+    }).delay(2000).then(function () {
+        return exec('./node_modules/.bin/mocha ' +
+                    '--no-timeouts ' +
+                    '--ui chewbacca/mocha-benchmark-ui ' +
+                    '--reporter chewbacca/mocha-benchmark-reporter ' +
+                    mochaArgs);
     }).spread(function (stdout) {
         var result = JSON.parse(stdout.toString('utf-8'));
         result.ref = ref;
