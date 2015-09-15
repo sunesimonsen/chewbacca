@@ -40,15 +40,9 @@ exports = module.exports = function BenchmarkReporter(runner) {
 
         process.stdout.write(JSON.stringify(obj, null, 2));
     });
-}
+};
 
 function toJsonOutput(test) {
-    if (test.metadata && typeof test.metadata.iterations === 'number' && typeof test.duration === 'number') {
-        var duration = test.metadata.duration;
-        test.metadata.averageDuration = duration  / test.metadata.iterations;
-        test.metadata.operationsPrSecond = test.metadata.iterations / (duration / 1000);
-    }
-
     return {
         title: test.title,
         fullTitle: test.fullTitle(),

@@ -28,11 +28,25 @@ var iterationCount = 5000;
 function updateMetadata(test, iterations) {
     var averageOperationTimeNS = averageWithoutOutliers(iterations);
     test.metadata.iterations = iterationCount;
-    test.metadata.duration = averageOperationTimeNS * iterationCount / 1e9;
-    test.metadata.averageDurationInNanoSeconds = averageOperationTimeNS;
-    test.metadata.operationsPrSecond = averageOperationTimeNS * 1e9;
+    test.metadata.durationInNanoseconds = averageOperationTimeNS * iterationCount;
+    test.metadata.durationInMiliseconds = averageOperationTimeNS * iterationCount / 1000000;
+    test.metadata.averageDurationInNanoseconds = averageOperationTimeNS;
+    test.metadata.averageDurationInMilliseconds = averageOperationTimeNS / 1000000;
+    test.metadata.operationsPrSecond = 1e9 / averageOperationTimeNS;
 }
 
+function detectReturningPromise(fn) {
+    try {
+        var promise = fn();
+        if (promise && typeof promise.then === 'function') {
+            promise.then(function () {}, function (err) {});
+            return true;
+        }
+    } catch (e) {
+        throw e;
+    }
+    return false;
+}
 module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
     var suites = [suite];
 
@@ -79,56 +93,56 @@ module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
             }
 
             var isAsync = fn && fn.length > 0;
-
+            var returnsPromise = detectReturningPromise(fn);
             var iterations = new Array(iterationCount);
-            for (var i = 0; i < iterationCount; i += 1) {
-                iterations[i] = 0;
-            }
-            var indexes = Object.keys(iterations);
-            var test = new Test(title, function () {
-                var result = null;
-                var promise;
-                indexes.forEach(function (i) {
+
+            var runIterations;
+            if (isAsync) {
+                runIterations = function (i, done) {
+                    if (i >= iterationCount) {
+                        return done();
+                    }
+
                     var start = process.hrtime();
-                    if (isAsync) {
-                        promise = new Promise(function (resolve, reject) {
-                            fn(function (err) {
-                                if (err) {
-                                    reject(err);
-                                } else {
-                                    resolve();
-                                }
-                            });
-                        });
-                    } else {
-                        promise = fn();
-                    }
-
-                    if (promise && typeof promise.then === 'function') {
-                        if (result) {
-                            result = result.then(function () {
-                                iterations[i] = nanoSeconds(process.hrtime(start));
-                                return promise;
-                            });
+                    fn(function (err) {
+                        if (err) {
+                            done(err);
                         } else {
-                            result = promise.then(function () {
-                                iterations[i] = nanoSeconds(process.hrtime(start));
-                            });
+                            iterations[i] = nanoSeconds(process.hrtime(start));
+                            runIterations(i + 1, done);
                         }
-                    } else {
-                        iterations[i] = nanoSeconds(process.hrtime(start));
-                    }
-                });
-
-                if (result) {
-                    result.then(function () {
-                        updateMetadata(test, iterations);
                     });
-                } else {
-                    updateMetadata(test, iterations);
-                }
+                };
+            } else if (returnsPromise) {
+                runIterations = function(i, done) {
+                    if (i >= iterationCount) {
+                        return done();
+                    }
 
-                return result;
+                    var start = process.hrtime();
+                    var promise = fn().then(function () {
+                        iterations[i] = nanoSeconds(process.hrtime(start));
+                        runIterations(i + 1, done);
+                    }).catch(done);
+                };
+            } else {
+                runIterations = function (i, done) {
+                    if (i >= iterationCount) {
+                        return done();
+                    }
+
+                    var start = process.hrtime();
+                    fn();
+                    iterations[i] = nanoSeconds(process.hrtime(start));
+                    runIterations(i + 1, done);
+                };
+            }
+
+            var test = new Test(title, function (done) {
+                runIterations(0, function (err) {
+                    updateMetadata(test, iterations);
+                    done(err);
+                });
             });
             test.metadata = {};
             test.file = file;

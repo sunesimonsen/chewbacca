@@ -100,8 +100,8 @@ exec('git diff-index --quiet HEAD', function (err, stdout, stderr) {
               results[0].passes.forEach(function (result, i) {
                   var otherResult = results[1].passes[i];
                   if (otherResult.fullTitle === result.fullTitle) {
-                      var difference = result.metadata.operationsPrSecond - otherResult.metadata.operationsPrSecond;
-                      var ratio = difference / otherResult.metadata.operationsPrSecond;
+                      var difference = result.metadata.averageDurationInNanoseconds - otherResult.metadata.averageDurationInNanoseconds;
+                      var ratio = difference / otherResult.metadata.averageDurationInNanoseconds;
                       numValidResults += 1;
                       sumRatios += ratio;
                       console.log(result.fullTitle,
