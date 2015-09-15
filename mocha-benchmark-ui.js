@@ -126,15 +126,13 @@ module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
                     }).catch(done);
                 };
             } else {
-                runIterations = function (i, done) {
-                    if (i >= iterationCount) {
-                        return done();
+                runIterations = function (_, done) {
+                    for (var i = 0; i < iterationCount; i += 1) {
+                        var start = process.hrtime();
+                        fn();
+                        iterations[i] = nanoSeconds(process.hrtime(start));
                     }
-
-                    var start = process.hrtime();
-                    fn();
-                    iterations[i] = nanoSeconds(process.hrtime(start));
-                    runIterations(i + 1, done);
+                    done();
                 };
             }
 
