@@ -28,7 +28,7 @@ var iterationCount = 5000;
 function updateMetadata(test, iterations) {
     var averageOperationTimeNS = averageWithoutOutliers(iterations);
     test.metadata.iterations = iterationCount;
-    test.metadata.duration = averageOperationTimeNS * iterationCount / 1000000;
+    test.metadata.duration = averageOperationTimeNS * iterationCount / 1e9;
     test.metadata.averageDurationInNanoSeconds = averageOperationTimeNS;
     test.metadata.operationsPrSecond = averageOperationTimeNS * 1e9;
 }
