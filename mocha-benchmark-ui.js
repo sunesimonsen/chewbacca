@@ -24,6 +24,7 @@ function nanoSeconds(hrtime) {
 }
 
 var iterationCount = 5000;
+var iterations = new Array(iterationCount);
 
 function updateMetadata(test, iterations) {
     var averageOperationTimeNS = averageWithoutOutliers(iterations);
@@ -94,7 +95,6 @@ module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
 
             var isAsync = fn && fn.length > 0;
             var returnsPromise = detectReturningPromise(fn);
-            var iterations = new Array(iterationCount);
 
             var runIterations;
             if (isAsync) {
