@@ -29,6 +29,8 @@ if (refs.length === 1) {
     refs.unshift('working dir');
 }
 
+var avg;
+
 function exec(commandLine, quiet) {
     if (typeof quiet === 'function') {
         cb = quiet;
@@ -114,7 +116,7 @@ exec('git diff-index --quiet HEAD').caught(function (err) {
             );
         }
     });
-    var avg = sumRatios / numValidResults;
+    avg = sumRatios / numValidResults;
     console.log(results[0].ref,
                 'is',
                 (100 * Math.abs(avg)).toFixed(2) + '%',
