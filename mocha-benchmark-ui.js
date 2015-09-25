@@ -3,21 +3,6 @@ var Suite = require('mocha/lib/suite');
 var Test  = require('mocha/lib/test');
 var escapeRe = require('escape-string-regexp');
 
-function filterOutliers(data) {
-    // The smallest numbers are the most stable because of garbage collection
-    var sorted = data.slice().sort(function(a,b){return a - b; });
-    sorted = sorted.slice(0, Math.round(sorted.length / 4));
-    return sorted;
-}
-
-function averageWithoutOutliers(data) {
-    var values = filterOutliers(data);
-    var sum = values.reduce(function (result, duration) {
-        return result + duration;
-    }, 0);
-    return sum / values.length;
-}
-
 function nanoSeconds(hrtime) {
     return hrtime[0] * 1e9 + hrtime[1];
 }
@@ -25,14 +10,12 @@ function nanoSeconds(hrtime) {
 var iterationCount = 5000;
 var iterations = new Array(iterationCount);
 
-function updateMetadata(test, iterations) {
-    var averageOperationTimeNS = averageWithoutOutliers(iterations);
+function updateMetadata(test, bestIterationTime) {
     test.metadata.iterations = iterationCount;
-    test.metadata.durationInNanoseconds = averageOperationTimeNS * iterationCount;
-    test.metadata.durationInMiliseconds = averageOperationTimeNS * iterationCount / 1000000;
-    test.metadata.averageDurationInNanoseconds = averageOperationTimeNS;
-    test.metadata.averageDurationInMilliseconds = averageOperationTimeNS / 1000000;
-    test.metadata.operationsPrSecond = 1e9 / averageOperationTimeNS;
+    test.metadata.durationInNanoseconds = bestIterationTime * iterationCount;
+    test.metadata.durationInMiliseconds = bestIterationTime * iterationCount / 1000000;
+    test.metadata.bestIterationTime = bestIterationTime;
+    test.metadata.operationsPrSecond = 1e9 / bestIterationTime;
 }
 
 function detectReturningPromise(fn) {
@@ -94,6 +77,7 @@ module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
 
             var isAsync = fn && fn.length > 0;
             var returnsPromise = detectReturningPromise(fn);
+            var bestIterationTime = Infinity;
 
             var runIterations;
             if (isAsync) {
@@ -107,7 +91,7 @@ module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
                         if (err) {
                             done(err);
                         } else {
-                            iterations[i] = nanoSeconds(process.hrtime(start));
+                            bestIterationTime = Math.min(bestIterationTime, nanoSeconds(process.hrtime(start)));
                             runIterations(i + 1, done);
                         }
                     });
@@ -120,7 +104,7 @@ module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
 
                     var start = process.hrtime();
                     var promise = fn().then(function () {
-                        iterations[i] = nanoSeconds(process.hrtime(start));
+                        bestIterationTime = Math.min(bestIterationTime, nanoSeconds(process.hrtime(start)));
                         runIterations(i + 1, done);
                     }).catch(done);
                 };
@@ -129,7 +113,7 @@ module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
                     for (var i = 0; i < iterationCount; i += 1) {
                         var start = process.hrtime();
                         fn();
-                        iterations[i] = nanoSeconds(process.hrtime(start));
+                        bestIterationTime = Math.min(bestIterationTime, nanoSeconds(process.hrtime(start)));
                     }
                     done();
                 };
@@ -137,7 +121,7 @@ module.exports = Mocha.interfaces['mocha-benchmark-ui'] = function(suite) {
 
             var test = new Test(title, function (done) {
                 runIterations(0, function (err) {
-                    updateMetadata(test, iterations);
+                    updateMetadata(test, bestIterationTime);
                     done(err);
                 });
             });
