@@ -61,6 +61,8 @@ function benchmarkRef(ref) {
             }
         }
     }).then(function () {
+        return exec('npm install', true);
+    }).then(function () {
         return exec('./node_modules/.bin/mocha ' +
                     '--no-timeouts ' +
                     '--ui chewbacca/mocha-benchmark-ui ' +
